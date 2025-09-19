@@ -671,53 +671,73 @@ function initVisitorCounter() {
     // Set initial loading state
     visitorCountElement.textContent = '...';
     
-    // Try multiple services in order of preference
-    tryCounterService(visitorCountElement);
+    // Use a simple but reliable approach
+    trySimpleCounter(visitorCountElement);
 }
 
-async function tryCounterService(element) {
-    const services = [
-        // Service 1: CountAPI
-        async () => {
-            const response = await fetch('https://api.countapi.xyz/hit/junglemnagithubio/portfolio');
-            const data = await response.json();
-            return data.value;
-        },
-        // Service 2: Alternative CountAPI endpoint
-        async () => {
-            const response = await fetch('https://api.countapi.xyz/hit/github-portfolio/visits');
-            const data = await response.json();
-            return data.value;
-        },
-        // Service 3: Simple GitHub-based counter
-        async () => {
-            const response = await fetch('https://api.github.com/repos/JungleMNa/JungleMNa.github.io');
-            const data = await response.json();
-            // Use repository data as a base number
-            return Math.floor(data.created_at ? new Date().getTime() / 1000000 : 1) + 42;
-        }
-    ];
-    
-    for (let i = 0; i < services.length; i++) {
-        try {
-            console.log(`Trying service ${i + 1}...`);
-            const count = await services[i]();
-            if (typeof count === 'number' && count > 0) {
-                console.log(`Service ${i + 1} succeeded with count:`, count);
-                animateCounter(element, count);
-                return;
+function trySimpleCounter(element) {
+    // Try the most reliable CountAPI endpoint
+    fetch('https://api.countapi.xyz/hit/junglemnagithubio.github.io/visits')
+        .then(response => {
+            console.log('CountAPI response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('CountAPI response data:', data);
+            if (data && data.value !== undefined) {
+                animateCounter(element, data.value);
+            } else {
+                throw new Error('No value in response');
             }
-        } catch (error) {
-            console.log(`Service ${i + 1} failed:`, error);
-        }
-    }
+        })
+        .catch(error => {
+            console.log('CountAPI failed, trying backup:', error);
+            // Backup: Use a different CountAPI key
+            fetch('https://api.countapi.xyz/hit/portfolio-site/total-visits')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Backup CountAPI data:', data);
+                    if (data && data.value !== undefined) {
+                        animateCounter(element, data.value);
+                    } else {
+                        throw new Error('Backup also failed');
+                    }
+                })
+                .catch(backupError => {
+                    console.log('Backup failed, using enhanced localStorage:', backupError);
+                    useEnhancedLocalStorage(element);
+                });
+        });
+}
+
+function useEnhancedLocalStorage(element) {
+    // Get or create a visitor session
+    const sessionKey = 'portfolio_visit_session';
+    const totalVisitsKey = 'portfolio_total_visits';
+    const lastVisitKey = 'portfolio_last_visit';
     
-    // All services failed, use local storage as last resort
-    console.log('All services failed, using localStorage');
-    let localCount = parseInt(localStorage.getItem('siteVisits') || '0');
-    localCount++;
-    localStorage.setItem('siteVisits', localCount.toString());
-    animateCounter(element, localCount);
+    const now = Date.now();
+    const lastVisit = localStorage.getItem(lastVisitKey);
+    const currentSession = sessionStorage.getItem(sessionKey);
+    
+    // If this is a new session (no session storage or more than 30 minutes since last visit)
+    if (!currentSession || !lastVisit || (now - parseInt(lastVisit)) > 30 * 60 * 1000) {
+        // Increment total visits
+        let totalVisits = parseInt(localStorage.getItem(totalVisitsKey) || '0');
+        totalVisits++;
+        
+        localStorage.setItem(totalVisitsKey, totalVisits.toString());
+        localStorage.setItem(lastVisitKey, now.toString());
+        sessionStorage.setItem(sessionKey, 'active');
+        
+        console.log('New visit recorded. Total visits:', totalVisits);
+        animateCounter(element, totalVisits);
+    } else {
+        // Same session, just show current count
+        const totalVisits = parseInt(localStorage.getItem(totalVisitsKey) || '1');
+        console.log('Same session. Showing existing count:', totalVisits);
+        animateCounter(element, totalVisits);
+    }
 }
 
 // Remove the alternative counter function that used random numbers
