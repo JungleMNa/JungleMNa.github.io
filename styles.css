@@ -213,6 +213,31 @@ body {
     color: #ffffff;
 }
 
+.nav-visitor-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.nav-visitor-counter i {
+    color: #ffffff;
+    font-size: 0.9rem;
+}
+
+.nav-visitor-counter #visitor-count {
+    color: #ffffff;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    min-width: 30px;
+    text-align: center;
+}
+
 .nav-menu {
     display: flex;
     list-style: none;
@@ -1079,6 +1104,20 @@ section {
 
     .hamburger {
         display: flex;
+    }
+
+    .nav-visitor-counter {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-visitor-counter i {
+        font-size: 0.8rem;
+    }
+
+    .nav-visitor-counter #visitor-count {
+        font-size: 0.8rem;
+        min-width: 25px;
     }
 
     .hero-content {

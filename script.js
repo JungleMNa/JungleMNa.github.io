@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initCounters();
     initContactForm();
     initScrollEffects();
+    initVisitorCounter();
 });
 
 // Side Navigation functionality
@@ -660,3 +661,70 @@ const textObserver = new IntersectionObserver((entries) => {
 textElements.forEach(element => {
     textObserver.observe(element);
 });
+
+// Visitor Counter functionality
+function initVisitorCounter() {
+    const visitorCountElement = document.getElementById('visitor-count');
+    
+    if (!visitorCountElement) return;
+    
+    // Set initial loading state
+    visitorCountElement.textContent = '...';
+    
+    // Use CountAPI for accurate visitor tracking
+    fetch('https://api.countapi.xyz/hit/junglemnagithubio/visits')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && typeof data.value === 'number') {
+                // Animate to the real count
+                animateCounter(visitorCountElement, data.value);
+            } else {
+                // If no valid data, try to get current count without incrementing
+                return fetch('https://api.countapi.xyz/get/junglemnagithubio/visits');
+            }
+        })
+        .then(response => {
+            if (response) {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && typeof data.value === 'number') {
+                animateCounter(visitorCountElement, data.value);
+            } else {
+                // Final fallback - just show a simple message
+                visitorCountElement.textContent = '1+';
+            }
+        })
+        .catch(error => {
+            console.log('Visitor counter unavailable:', error);
+            // Simple fallback without random numbers
+            visitorCountElement.textContent = '1+';
+        });
+}
+
+// Remove the alternative counter function that used random numbers
+
+// Animate the counter display
+function animateCounter(element, targetValue) {
+    let currentValue = 0;
+    const increment = Math.ceil(targetValue / 50); // Animate over ~50 steps
+    const duration = 2000; // 2 seconds
+    const stepTime = duration / (targetValue / increment);
+    
+    const timer = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+            currentValue = targetValue;
+            clearInterval(timer);
+        }
+        
+        // Format number with commas for readability
+        element.textContent = currentValue.toLocaleString();
+    }, stepTime);
+}
