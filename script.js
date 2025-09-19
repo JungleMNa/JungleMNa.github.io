@@ -2,12 +2,55 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all functionality
     initNavigation();
+    initSideNavigation();
     initAnimations();
     // initSkillBars(); // Removed - skill bars no longer exist
     initCounters();
     initContactForm();
     initScrollEffects();
 });
+
+// Side Navigation functionality
+function initSideNavigation() {
+    const sideNav = document.querySelector('.side-nav');
+    const navTab = document.querySelector('.nav-tab');
+    
+    if (sideNav && navTab) {
+        // Add smooth transition delays
+        sideNav.addEventListener('mouseenter', () => {
+            sideNav.style.transition = 'left 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+        
+        sideNav.addEventListener('mouseleave', () => {
+            sideNav.style.transition = 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+        
+        // Add click functionality to nav tab for mobile
+        navTab.addEventListener('click', () => {
+            sideNav.classList.toggle('mobile-active');
+        });
+        
+        // Set active page indicator
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        const navLinks = document.querySelectorAll('.nav-link-side');
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+        
+        // Ensure custom cursor works on all side nav elements
+        const sideNavElements = document.querySelectorAll('.nav-tab, .nav-link-side');
+        sideNavElements.forEach(element => {
+            // Remove any existing cursor styles
+            element.style.cursor = 'none';
+        });
+    }
+}
 
 // Navigation functionality
 function initNavigation() {
@@ -216,7 +259,6 @@ function showNotification(message, type) {
         border: none;
         color: white;
         font-size: 1.5rem;
-        cursor: pointer;
         padding: 0;
         line-height: 1;
     `;
@@ -322,7 +364,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 
     // Cursor hover effects
-    const hoverElements = document.querySelectorAll('a, button, .skill-item, .floating-icon');
+    const hoverElements = document.querySelectorAll('a, button, .skill-item, .floating-icon, .nav-tab, .nav-link-side, .project-card, .project-link, .tech-tag');
     hoverElements.forEach(element => {
         element.addEventListener('mouseenter', () => {
             cursor.classList.add('hover');
