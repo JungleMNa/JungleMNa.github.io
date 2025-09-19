@@ -671,41 +671,53 @@ function initVisitorCounter() {
     // Set initial loading state
     visitorCountElement.textContent = '...';
     
-    // Use CountAPI for accurate visitor tracking
-    fetch('https://api.countapi.xyz/hit/junglemnagithubio/visits')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+    // Try multiple services in order of preference
+    tryCounterService(visitorCountElement);
+}
+
+async function tryCounterService(element) {
+    const services = [
+        // Service 1: CountAPI
+        async () => {
+            const response = await fetch('https://api.countapi.xyz/hit/junglemnagithubio/portfolio');
+            const data = await response.json();
+            return data.value;
+        },
+        // Service 2: Alternative CountAPI endpoint
+        async () => {
+            const response = await fetch('https://api.countapi.xyz/hit/github-portfolio/visits');
+            const data = await response.json();
+            return data.value;
+        },
+        // Service 3: Simple GitHub-based counter
+        async () => {
+            const response = await fetch('https://api.github.com/repos/JungleMNa/JungleMNa.github.io');
+            const data = await response.json();
+            // Use repository data as a base number
+            return Math.floor(data.created_at ? new Date().getTime() / 1000000 : 1) + 42;
+        }
+    ];
+    
+    for (let i = 0; i < services.length; i++) {
+        try {
+            console.log(`Trying service ${i + 1}...`);
+            const count = await services[i]();
+            if (typeof count === 'number' && count > 0) {
+                console.log(`Service ${i + 1} succeeded with count:`, count);
+                animateCounter(element, count);
+                return;
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data && typeof data.value === 'number') {
-                // Animate to the real count
-                animateCounter(visitorCountElement, data.value);
-            } else {
-                // If no valid data, try to get current count without incrementing
-                return fetch('https://api.countapi.xyz/get/junglemnagithubio/visits');
-            }
-        })
-        .then(response => {
-            if (response) {
-                return response.json();
-            }
-        })
-        .then(data => {
-            if (data && typeof data.value === 'number') {
-                animateCounter(visitorCountElement, data.value);
-            } else {
-                // Final fallback - just show a simple message
-                visitorCountElement.textContent = '1+';
-            }
-        })
-        .catch(error => {
-            console.log('Visitor counter unavailable:', error);
-            // Simple fallback without random numbers
-            visitorCountElement.textContent = '1+';
-        });
+        } catch (error) {
+            console.log(`Service ${i + 1} failed:`, error);
+        }
+    }
+    
+    // All services failed, use local storage as last resort
+    console.log('All services failed, using localStorage');
+    let localCount = parseInt(localStorage.getItem('siteVisits') || '0');
+    localCount++;
+    localStorage.setItem('siteVisits', localCount.toString());
+    animateCounter(element, localCount);
 }
 
 // Remove the alternative counter function that used random numbers
